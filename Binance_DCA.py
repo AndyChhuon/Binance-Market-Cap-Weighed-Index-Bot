@@ -71,9 +71,7 @@ for deltoken in unwanted_tokens:
 client = Client(api_key, api_secret)
 btc_dict = client.get_asset_balance(asset='BTC')
 
-for k,v in btc_dict.items():
-    if k == 'free':
-        btc_balance = v
+btc_balance = btc_dict['free']
 
 print('btc balance: ' + btc_balance)
 
@@ -82,10 +80,7 @@ for k,v in tokens_with_allocation.items():
     
         try:
             avg_price = client.get_avg_price(symbol= k+'BTC')
-
-            for a,b in avg_price.items():
-                if a == 'price':
-                    coin_price = b
+            coin_price = avg_price['price']
 
 
         
