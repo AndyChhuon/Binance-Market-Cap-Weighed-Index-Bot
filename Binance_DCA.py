@@ -2,6 +2,7 @@ from requests import Request, Session
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 import json
+import math
 
 nb_coins = '5' #input the range of top cryptocurrencies you would like to track
 api_key = '' #input binance api key
@@ -69,7 +70,6 @@ for k,v in tokens_with_mcap.items(): #Find total mcap of wanted tokens and get a
 fraction_allocation = [token_mcap/total_mcap for token_mcap in tokens_mcap]
 
 tokens_with_allocation = dict(zip(wanted_tokens, fraction_allocation)) #Get token:fraction_allocation dictionary
-print(tokens_with_allocation)
 
 if 'BTC' not in unwanted_tokens:
     del[tokens_with_allocation['BTC']] #no need to purchase Btc because starts off with btc balance
@@ -81,16 +81,36 @@ btc_balance = btc_dict['free'] #find btc balance of binance account
 
 print('btc balance: ' + btc_balance)
 
-for k,v in tokens_with_allocation.items():
+def get_qty_precision(symbol):
+    try:
+        symbol_info = client.get_symbol_info(symbol+'BTC')
+        step_size = 0.0
+        for f in symbol_info['filters']:
+            if f['filterType'] == 'LOT_SIZE':
+                step_size = float(f['stepSize'])
+        precision = int(round(-math.log(step_size,10),0))
+        return precision
+    except:
+        symbol_info = client.get_symbol_info('BTC' + symbol)
+        step_size = 0.0
+        for f in symbol_info['filters']:
+            if f['filterType'] == 'LOT_SIZE':
+                step_size = float(f['stepSize'])
+        precision = int(round(-math.log(step_size,10),0))
+        return precision
+
+for k,v in tokens_with_allocation.items(): #Place order for tokens
     
         try:
             avg_price = client.get_avg_price(symbol= k+'BTC')
 
             coin_price = avg_price['price']
-            print(coin_price)
         
-            coin_qty = v * float(btc_balance) / float(coin_price)
-            print(coin_qty)
+            precision = get_qty_precision(k)
+
+            coin_qty = round(v * float(btc_balance) / float(coin_price), precision)
+
+
             order = client.order_market_buy(
             symbol= k+'BTC',
             quantity= coin_qty)
@@ -102,21 +122,25 @@ for k,v in tokens_with_allocation.items():
                 avg_price = client.get_avg_price(symbol= 'BTC' + k)
 
                 coin_price = avg_price['price']
-                print(coin_price)
+
+                precision = get_qty_precision(k)
+
         
-                coin_qty = v * float(btc_balance) * float(coin_price)
-                print(coin_qty)
-                order = client.order_market_buy(
+                coin_qty = round (v * float(btc_balance), precision)
+                eq_qty = v * float(btc_balance) * float(coin_price)
+
+                order = client.order_market_sell(
                 symbol= 'BTC' + k,
                 quantity= coin_qty)
 
-                print('Purchase of ' + str(coin_qty) + ' ' + k + ' successful')
+                print('Purchase of ' + str(eq_qty) + ' ' + k + ' successful')
             
             except:    
                 try:    
                     print('Purchase of ' + str(coin_qty) + ' ' + k + ' failed')
                 except:
                     print('Purchase of ' + k + ' failed')
+
                     
 
 
