@@ -4,8 +4,8 @@ from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 import json
 
 nb_coins = '5' #input the range of top cryptocurrencies you would like to track
-api_key = 'GgPmR1Z8e8AHVt9MezUtYgPyBtYFlFW4sDqPdLQEWkyinPOIGu45IoeVZOXCgCm2' #input binance api key
-api_secret = 'ZJumkYhSq11p0leDfL1bVypxNh2WBHXqwfGfuAwyEIK0rJwn27kpuRQKklnkW8qN' #input binance api secret key
+api_key = '' #input binance api key
+api_secret = '' #input binance api secret key
 unwanted_tokens = [] #input symbol of undesired tokens in the top x coins (ex: unwated_tokens = ['ETH', 'BNB'])
 
 url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
