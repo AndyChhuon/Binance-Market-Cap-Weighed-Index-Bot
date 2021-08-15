@@ -3,10 +3,9 @@ from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 import json
 
-  
-nb_coins = '100' #input how many top cryptocurrencies you would like to track
-api_key = '' #input binance api key
-api_secret = '' #input binance api secret key
+nb_coins = '5' #input the range of top cryptocurrencies you would like to track
+api_key = 'GgPmR1Z8e8AHVt9MezUtYgPyBtYFlFW4sDqPdLQEWkyinPOIGu45IoeVZOXCgCm2' #input binance api key
+api_secret = 'ZJumkYhSq11p0leDfL1bVypxNh2WBHXqwfGfuAwyEIK0rJwn27kpuRQKklnkW8qN' #input binance api secret key
 unwanted_tokens = [] #input symbol of undesired tokens in the top x coins (ex: unwated_tokens = ['ETH', 'BNB'])
 
 url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
@@ -21,8 +20,6 @@ headers = {
 
 session = Session()
 session.headers.update(headers)
-
-
 
 try:
     response = session.get(url, params=parameters)
@@ -53,47 +50,73 @@ def json_extract(obj, key):
     values = extract(obj, arr, key)
     return values
 
-tokens = json_extract(data, 'symbol')
+tokens = json_extract(data, 'symbol') #gives list of tokens
 tokens = list(dict.fromkeys(tokens))
-mcap = json_extract(data, 'market_cap')
+mcap = json_extract(data, 'market_cap') #gives market cap of tokens listed
 
-
-total_mcap = sum(mcap)
-
-fraction_allocation= [token_mcap /total_mcap for token_mcap in mcap]
-
-tokens_with_allocation = dict(zip(tokens,fraction_allocation))
-del[tokens_with_allocation['BTC']]
-
+tokens_with_mcap = dict(zip(tokens, mcap)) #makes a dictionary of token name:market cap
 for deltoken in unwanted_tokens:
-    del[tokens_with_allocation[deltoken]]
+    del[tokens_with_mcap[deltoken]] #delete unwanted tokens
+
+total_mcap = 0
+tokens_mcap=[]
+wanted_tokens = []
+for k,v in tokens_with_mcap.items(): #Find total mcap of wanted tokens and get array of wanted tokens' mcap and wanted tokens' name
+    total_mcap = total_mcap + v
+    tokens_mcap.append(v)
+    wanted_tokens.append(k)
+
+fraction_allocation = [token_mcap/total_mcap for token_mcap in tokens_mcap]
+
+tokens_with_allocation = dict(zip(wanted_tokens, fraction_allocation)) #Get token:fraction_allocation dictionary
+print(tokens_with_allocation)
+
+if 'BTC' not in unwanted_tokens:
+    del[tokens_with_allocation['BTC']] #no need to purchase Btc because starts off with btc balance
 
 client = Client(api_key, api_secret)
-btc_dict = client.get_asset_balance(asset='BTC')
+btc_dict = client.get_asset_balance(asset='BTC') 
 
-btc_balance = btc_dict['free']
+btc_balance = btc_dict['free'] #find btc balance of binance account
 
 print('btc balance: ' + btc_balance)
-
 
 for k,v in tokens_with_allocation.items():
     
         try:
             avg_price = client.get_avg_price(symbol= k+'BTC')
+
             coin_price = avg_price['price']
-
-
+            print(coin_price)
         
             coin_qty = v * float(btc_balance) / float(coin_price)
-
+            print(coin_qty)
             order = client.order_market_buy(
             symbol= k+'BTC',
-            quantity=coin_qty)
+            quantity= coin_qty)
 
             print('Purchase of ' + str(coin_qty) + ' ' + k + ' successful')
 
         except: 
-            print('Purchase of ' + str(coin_qty) + ' ' + k + ' failed')
+            try: 
+                avg_price = client.get_avg_price(symbol= 'BTC' + k)
 
+                coin_price = avg_price['price']
+                print(coin_price)
         
-        
+                coin_qty = v * float(btc_balance) * float(coin_price)
+                print(coin_qty)
+                order = client.order_market_buy(
+                symbol= 'BTC' + k,
+                quantity= coin_qty)
+
+                print('Purchase of ' + str(coin_qty) + ' ' + k + ' successful')
+            
+            except:    
+                try:    
+                    print('Purchase of ' + str(coin_qty) + ' ' + k + ' failed')
+                except:
+                    print('Purchase of ' + k + ' failed')
+                    
+
+
