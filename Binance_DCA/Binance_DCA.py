@@ -5,8 +5,8 @@ import json
 import math
 
 nb_coins = '5' #input the range of top cryptocurrencies you would like to track
-api_key = 'GgPmR1Z8e8AHVt9MezUtYgPyBtYFlFW4sDqPdLQEWkyinPOIGu45IoeVZOXCgCm2' #input binance api key
-api_secret = 'ZJumkYhSq11p0leDfL1bVypxNh2WBHXqwfGfuAwyEIK0rJwn27kpuRQKklnkW8qN' #input binance api secret key
+api_key = '' #input binance api key
+api_secret = '' #input binance api secret key
 unwanted_tokens = [] #input symbol of undesired tokens in the top x coins (ex: unwated_tokens = ['ETH', 'BNB'])
 
 url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
@@ -28,7 +28,6 @@ try:
 
 except (ConnectionError, Timeout, TooManyRedirects) as e:
     print(e)
-
 
 def json_extract(obj, key):
     
@@ -110,7 +109,6 @@ for k,v in tokens_with_allocation.items(): #Place order for tokens
 
             coin_qty = round(v * float(btc_balance) / float(coin_price), precision)
 
-
             order = client.order_market_buy(
             symbol= k+'BTC',
             quantity= coin_qty)
@@ -142,5 +140,6 @@ for k,v in tokens_with_allocation.items(): #Place order for tokens
                     print('Purchase of ' + k + ' failed')
 
                     
+
 
 
